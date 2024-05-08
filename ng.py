@@ -1,20 +1,27 @@
-from flask import Flask, jsonify
+from flask import Flask
 import subprocess
 
 app = Flask(__name__)
 
 def run_ngrok():
     try:
-        subprocess.run(["ngrok", "http", "--domain=intent-sharply-kodiak.ngrok-free.app", "8000"], check=True)
+        while True:
+            subprocess.run(["ngrok", "http", "--domain=intent-sharply-kodiak.ngrok-free.app", "8000"], check=True)
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
-        return {"error": str(e)}
-    return {"message": "Ngrok tunnel started successfully"}
-
-@app.route("/start-ngrok", methods=["GET"])
-def start_ngrok_tunnel():
-    result = run_ngrok()
-    return jsonify(result)
+        # Handle the error, if needed
+        pass
 
 if __name__ == "__main__":
-    app.run()  
+    # Start ngrok
+    ngrok_process = subprocess.Popen(["ngrok", "http", "--domain=intent-sharply-kodiak.ngrok-free.app", "8000"])
+    
+    # Start Flask app
+    app.run(port=8000, debug=True)
+    
+    try:
+        while True:
+            ngrok_process.wait(timeout=1)
+    except KeyboardInterrupt:
+        print("Keyboard interrupt detected, stopping ngrok...")
+        ngrok_process.terminate()
